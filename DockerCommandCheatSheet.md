@@ -1,7 +1,9 @@
-## Docker Commands Cheatsheet
+## Docker Commands Cheatsheet (Updated 2024)
 
-#### first try
-```
+> **IMPORTANT:** This cheatsheet has been updated for Docker 2024/2025 with Docker Compose v2, BuildKit, Multi-Platform Builds, and Security features.
+
+#### First Try
+```bash
 docker run hello-world
 docker info
 docker version
@@ -123,17 +125,57 @@ docker commit con1 dockerUserName/con1:latest
 docker commit -c 'CMD ["java","app"]' con1 dockerUserName/con1:second
 docker image inspect dockerUserName/con1:secon
 ```
-#### docker-compose commands (run this command where “docker-compose.yml” is)
-```
-docker-compose up -d
-docker-compose ps
-docker container ls -a
-docker-compose down  
-docker-compose config
-docker-compose images
-docker-compose logs
-docker-compose exec websrv ls -al
-docker-compose build
+#### Docker Compose v2 Commands (UPDATED 2024 - use "docker compose" not "docker-compose")
+```bash
+# NOTE: Use "docker compose" (with space) instead of "docker-compose" (with hyphen)
+# docker-compose v1 was deprecated in June 2023
+
+# Start services
+docker compose up -d
+
+# Stop and remove containers
+docker compose down
+
+# List containers
+docker compose ps
+
+# View logs
+docker compose logs
+docker compose logs -f                    # Follow logs
+docker compose logs service_name          # Logs for specific service
+
+# Execute command in service
+docker compose exec websrv ls -al
+docker compose exec -it websrv sh         # Interactive shell
+
+# Build or rebuild services
+docker compose build
+docker compose build --no-cache           # Build without cache
+
+# Validate and view compose file
+docker compose config
+
+# View images
+docker compose images
+
+# Pull service images
+docker compose pull
+
+# Scale services
+docker compose up -d --scale web=3        # Scale web service to 3 replicas
+
+# Restart services
+docker compose restart
+
+# Pause/Unpause services
+docker compose pause
+docker compose unpause
+
+# Remove stopped containers
+docker compose rm
+
+# View service status
+docker compose top
 ```
 #### docker swarm commmunication
 ```
@@ -214,11 +256,251 @@ docker exec -it c4c sh
 echo "password222" | docker secret create password2
 docker service update --secret-rm password --secret-add password2 secrettest (password is removed, new password2 object is added)
 ```
-#### docker stack (stack is like compose, but run-on swarm)(deploy, replica, update-config definitions are added to define Docker Stack file)
-```
-docker stack (to see stack help)
+#### Docker Stack (Legacy - Stack is like compose, but runs on swarm)
+```bash
+# NOTE: Docker Swarm is legacy. Consider Kubernetes for production.
+docker stack                                    # See stack help
 docker stack deploy -c docker-compose.yml firststack
-docker stack ls 
+docker stack ls
 docker stack services firststack
 docker stack ps firststack
+docker stack rm firststack                      # Remove stack
+```
+
+---
+
+## NEW 2024 Features
+
+#### Docker BuildKit (Enabled by Default since Docker 23.0)
+```bash
+# BuildKit is enabled by default. For older versions:
+export DOCKER_BUILDKIT=1                        # Linux/Mac
+$env:DOCKER_BUILDKIT=1                          # Windows PowerShell
+
+# Build with BuildKit features
+docker build --secret id=mysecret,src=./secret.txt .
+docker build --ssh default .
+
+# View build progress
+docker build --progress=plain .
+
+# Build with cache mount
+docker build --build-arg BUILDKIT_INLINE_CACHE=1 .
+```
+
+#### Multi-Platform Builds (NEW 2024)
+```bash
+# Create and use buildx builder
+docker buildx create --name mybuilder --use
+docker buildx inspect --bootstrap
+docker buildx ls
+
+# Build for multiple platforms
+docker buildx build --platform linux/amd64,linux/arm64 -t myapp:latest .
+
+# Build and push to registry
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t username/myapp:latest --push .
+
+# Build for specific platform
+docker buildx build --platform linux/arm64 -t myapp:arm64 .
+
+# Build for ARM (Apple Silicon, Raspberry Pi, AWS Graviton)
+docker buildx build --platform linux/arm64 -t myapp:arm .
+
+# List available platforms
+docker buildx inspect --bootstrap
+
+# Remove builder
+docker buildx rm mybuilder
+```
+
+#### Docker Security - Vulnerability Scanning (NEW 2024)
+```bash
+# Docker Scout (built into Docker Desktop)
+docker scout quickview myapp:latest
+docker scout cves myapp:latest
+docker scout recommendations myapp:latest
+docker scout compare myapp:latest --to myapp:previous
+
+# Enable Docker Scout
+docker scout enroll
+
+# Trivy - Open Source Security Scanner
+trivy image myapp:latest
+trivy image --severity HIGH,CRITICAL myapp:latest
+trivy image --format json myapp:latest
+
+# Scan Dockerfile
+trivy config Dockerfile
+
+# Grype - Vulnerability Scanner
+grype myapp:latest
+
+# Snyk Container Security
+snyk container test myapp:latest
+snyk container monitor myapp:latest
+```
+
+#### Healthchecks (NEW 2024)
+```bash
+# View container health status
+docker ps
+docker inspect --format='{{json .State.Health}}' container_name
+
+# Test healthcheck manually
+docker exec container_name curl -f http://localhost/health
+
+# View healthcheck logs
+docker inspect --format='{{range .State.Health.Log}}{{.Output}}{{end}}' container_name
+```
+
+#### Docker System Management (NEW 2024)
+```bash
+# System information
+docker system df                                # Show docker disk usage
+docker system df -v                             # Verbose output
+
+# Clean up
+docker system prune                             # Remove unused data
+docker system prune -a                          # Remove all unused images
+docker system prune --volumes                   # Include volumes
+docker system prune -a --volumes                # Remove everything unused
+
+# Events monitoring
+docker system events
+docker system events --filter 'type=container'
+
+# Real-time resource usage
+docker stats
+docker stats --no-stream                        # Single snapshot
+docker stats --format "table {{.Container}}\t{{.CPUPerc}}\t{{.MemUsage}}"
+```
+
+#### Container Resource Limits (Best Practice 2024)
+```bash
+# CPU limits
+docker run --cpus=2 myapp                       # Limit to 2 CPUs
+docker run --cpu-shares=512 myapp               # CPU shares (relative weight)
+
+# Memory limits
+docker run -m 512m myapp                        # Limit memory to 512MB
+docker run -m 512m --memory-swap 1g myapp       # Memory + swap limit
+
+# Combined resource limits
+docker run -m 512m --cpus=1 --name myapp nginx
+```
+
+#### Security Best Practices (NEW 2024)
+```bash
+# Run as non-root user
+docker run --user 1000:1000 myapp
+
+# Read-only root filesystem
+docker run --read-only myapp
+
+# Drop all capabilities and add only needed ones
+docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE myapp
+
+# Use security options
+docker run --security-opt=no-new-privileges myapp
+
+# Scan image before running
+docker scout cves myapp:latest && docker run myapp:latest
+```
+
+#### Image Analysis Tools (NEW 2024)
+```bash
+# Dive - Explore image layers
+dive myapp:latest
+
+# Hadolint - Dockerfile linter
+hadolint Dockerfile
+
+# View image history with sizes
+docker history myapp:latest
+docker history --no-trunc myapp:latest
+
+# Inspect image
+docker image inspect myapp:latest
+docker image inspect --format='{{.Size}}' myapp:latest
+```
+
+#### Docker Init (NEW 2024) - Quick Project Setup
+```bash
+# Initialize Docker assets for a project
+docker init
+
+# This creates:
+# - Dockerfile
+# - .dockerignore
+# - docker-compose.yml
+# Supports: Node.js, Python, Go, Rust, ASP.NET
+```
+
+#### Docker Context (Multiple Docker Hosts)
+```bash
+# List contexts
+docker context ls
+
+# Create new context
+docker context create mycontext --docker "host=ssh://user@remote-host"
+
+# Use context
+docker context use mycontext
+
+# Return to default
+docker context use default
+```
+
+---
+
+## Quick Reference
+
+### Most Used Commands (2024)
+```bash
+# Images
+docker build -t myapp .
+docker pull nginx:latest
+docker push username/myapp:latest
+docker images
+docker rmi myapp:latest
+
+# Containers
+docker run -d -p 8080:80 --name web nginx
+docker ps
+docker ps -a
+docker stop web
+docker rm web
+docker logs -f web
+docker exec -it web sh
+
+# Compose v2 (NEW)
+docker compose up -d
+docker compose down
+docker compose logs -f
+
+# Multi-platform (NEW)
+docker buildx build --platform linux/amd64,linux/arm64 -t myapp .
+
+# Security (NEW)
+docker scout cves myapp:latest
+
+# Cleanup
+docker system prune -a --volumes
+```
+
+### Image Size Optimization (Best Practice 2024)
+```bash
+# Use specific tags, not latest
+FROM node:20.11.0-alpine3.19
+
+# Multi-stage builds
+FROM node:20 AS builder
+# ... build steps
+FROM gcr.io/distroless/nodejs20-debian12
+COPY --from=builder /app /app
+
+# Use .dockerignore file (create it!)
+# Minimize layers (combine RUN commands)
 ```
