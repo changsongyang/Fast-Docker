@@ -1,19 +1,36 @@
 # Fast-Docker
-This repo aims to cover Docker details (Dockerfile, Image, Container, Commands, Volumes, Docker-Compose, Networks, Swarm, Stack) quickly, and possible example usage scenarios (HowTo: LABs) in a nutshell. Possible usage scenarios are aimed to update over time.
+This repo aims to cover Docker details (Dockerfile, Image, Container, Commands, Volumes, Docker-Compose, Networks, Security, Multi-Platform Builds) quickly, and possible example usage scenarios (HowTo: LABs) in a nutshell. This guide is updated with the latest Docker features and best practices for 2024/2025.
 
-**Keywords:** Docker-Image, Dockerfile, Containerization, Docker-Compose, Docker-Volume, Docker-Network, Docker-Swarm, Service, Cheatsheet.
+**Keywords:** Docker-Image, Dockerfile, Containerization, Docker-Compose, Docker-Volume, Docker-Network, Docker-Security, BuildKit, Multi-Platform, Distroless, Container-Security, Healthchecks, Cheatsheet.
+
+> **Note:** This guide has been updated for Docker 2024/2025 including Docker Compose v2, BuildKit, Multi-Platform Builds, and modern security practices.
 
 # Quick Look (HowTo: LABs)
+
+## Basic Docker Concepts
 - [LAB-01: Creating First Docker Image and Container using Docker File](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB01-FirstImageFirstContainer.md)
 - [LAB-02: Binding Volume to the Different Containers](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB02-DockerVolume.md)
     - [LAB-02.1: Binding Mount to the Container](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB02-DockerVolume.md#app_mount)
-- [LAB-03: Docker-Compose File - Creating 2 Different Containers:  WordPress Container depends on MySql Container](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB03-DockerCompose.md)
-- [LAB-04: Creating Docker Swarm Cluster With 5 PCs using PlayWithDocker : 3 x WordPress Containers and 1 x MySql Container using Docker-Compose File](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB04-DockerStackService.md)
-- [LAB-05: Running Docker Free Local Registry, Tagging Image, Pushing Image to the Local Registry, Pulling Image From Local Registry and Deleting Images from Local Registry](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB05-DockerLocalRegistry.md)
+- [LAB-03: Docker-Compose v2 - Creating 2 Different Containers: WordPress Container depends on MySql Container](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB03-DockerCompose.md)
 - [LAB-06: Transferring Content between Host PC and Docker Container](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB06-DockerTransferringContent.md)
+
+## Advanced Docker Features (NEW 2024/2025)
+- [LAB-10: Multi-Platform Builds with Docker BuildKit](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB10-MultiPlatformBuilds.md)
+- [LAB-11: Docker Security Best Practices - Distroless Images, Non-Root User, Vulnerability Scanning](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB11-SecurityBestPractices.md)
+- [LAB-12: Healthchecks and .dockerignore Best Practices](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB12-HealthchecksDockerignore.md)
+
+## Docker Registry & Configuration
+- [LAB-05: Running Docker Free Local Registry, Tagging Image, Pushing Image to the Local Registry, Pulling Image From Local Registry and Deleting Images from Local Registry](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB05-DockerLocalRegistry.md)
+- [LAB-09: Docker Configuration (Proxy, Registry)](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB09-DockerConfiguration.md)
+
+## Docker Build Examples
 - [LAB-07: Creating Docker Container using Dockerfile to Build C++ on Ubuntu18.04](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB07-DockerfileForLinuxC++Build.md)
 - [LAB-08: Creating Docker Container using Dockerfile to Build C++ on Windows](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB08-DockerfileForWindowsC++Build.md)
-- [LAB-09: Docker Configuration (Proxy, Registry)](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB09-DockerConfiguration.md)
+
+## Legacy Topics (For Reference)
+- [LAB-04: Creating Docker Swarm Cluster (Legacy - Use Kubernetes instead)](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB04-DockerStackService.md)
+
+## Reference
 - [Docker Commands Cheatsheet](https://github.com/omerbsezer/Fast-Docker/blob/main/DockerCommandCheatSheet.md)
 
 # Table of Contents
@@ -24,7 +41,7 @@ This repo aims to cover Docker details (Dockerfile, Image, Container, Commands, 
 - [What is Docker?](#whatisdocker)
     - [Architecture](#architecture)
     - [Installation](#installation)
-    - [Docker Engine (Deamon, REST API, CLI)](#engine)
+    - [Docker Engine (Daemon, REST API, CLI)](#engine)
     - [Docker Registry and Docker Hub](#registry)
     - [Docker Command Structure](#command)
     - [Docker Container](#container)
@@ -35,12 +52,21 @@ This repo aims to cover Docker details (Dockerfile, Image, Container, Commands, 
     - [Docker Environment Variables](#variables)
     - [Docker File](#file)
     - [Docker Image](#image)
-    - [Docker Compose](#compose)
-    - [Docker Swarm](#swarm)
-    - [Docker Stack / Docker Service](#stack)
+    - [Docker Compose v2 (Updated 2024)](#compose)
+    - [Docker BuildKit (NEW 2024)](#buildkit)
+    - [Multi-Platform Builds (NEW 2024)](#multiplatform)
+    - [Docker Security Best Practices (NEW 2024)](#security)
+        - [Distroless Images](#distroless)
+        - [Non-Root User](#nonroot)
+        - [Vulnerability Scanning](#scanning)
+    - [Healthchecks (NEW 2024)](#healthchecks)
+    - [.dockerignore Best Practices (NEW 2024)](#dockerignore)
+    - [Docker Swarm (Legacy)](#swarm)
+    - [Docker Stack / Docker Service (Legacy)](#stack)
 - [Play With Docker](#playwithdocker)
 - [Docker Commands Cheatsheet](#cheatsheet)
-- [Other Useful Resources Related Docker ](#resource)
+- [Container Orchestration: Kubernetes vs Swarm](#orchestration)
+- [Other Useful Resources Related Docker](#resource)
 - [References](#references)
 
 ## Motivation <a name="motivation"></a>
@@ -362,63 +388,562 @@ docker load -i .\hello.tar
 
 Goto: [App: Creating First Docker Image and Container using Docker File](https://github.com/omerbsezer/Fast-Docker/blob/main/FirstImageFirstContainer.md)
 
-### Docker Compose  <a name="compose"></a>
+### Docker Compose v2 (Updated 2024) <a name="compose"></a>
+
+> **IMPORTANT UPDATE 2024:** Docker Compose v1 (docker-compose) was deprecated in June 2023. Use Docker Compose v2 (docker compose with a space) instead!
+
 - Define and run multi-container applications with Docker.
-- Easy to create Docker components using one file: Docker-Compose file
-- It is a YAML file that defines components: 
-    - Services, 
-    - Volumes, 
-    - Networks, 
+- Easy to create Docker components using one file: Docker Compose file
+- It is a YAML file that defines components:
+    - Services,
+    - Volumes,
+    - Networks,
     - Secrets
-- Sample "docker-compose.yml" file: 
 
-```
-version: "3.8"
+#### Key Changes in Compose v2:
+- **Command syntax:** `docker compose` (with space) instead of `docker-compose` (with hyphen)
+- **Container naming:** Uses hyphen (-) as separator instead of underscore (_)
+- **Version field:** The `version:` field is now **obsolete** - start directly with `services:`
+- **Better integration:** Integrated into Docker CLI platform
+- **Improved performance:** Better build performance with BuildKit
 
+#### Sample "docker-compose.yml" file (Modern 2024 Format):
+
+```yaml
+# Note: version field is obsolete in Compose v2
 services:
   mydatabase:
-    image: mysql:5.7
+    image: mysql:8.0
     restart: always
-    volumes: 
+    volumes:
       - mydata:/var/lib/mysql
-    environment: 
+    environment:
       MYSQL_ROOT_PASSWORD: somewordpress
       MYSQL_DATABASE: wordpress
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: wordpress
     networks:
       - mynet
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
   mywordpress:
     image: wordpress:latest
-    depends_on: 
-      - mydatabase
+    depends_on:
+      mydatabase:
+        condition: service_healthy
     restart: always
     ports:
       - "80:80"
       - "443:443"
-    environment: 
+    environment:
       WORDPRESS_DB_HOST: mydatabase:3306
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress
       WORDPRESS_DB_NAME: wordpress
     networks:
       - mynet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   mydata: {}
+
 networks:
   mynet:
     driver: bridge
 ```
 
-- After saving the file as "docker-compose.yml", run the following commands where the docker-compose file is, to create containers, volumes, networks:
+#### Commands (Compose v2):
+
+```bash
+# Start services
+docker compose up -d
+
+# Stop services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# List running containers
+docker compose ps
+
+# Build or rebuild services
+docker compose build
+
+# Pull service images
+docker compose pull
+```
+
+> **Migration Note:** For most projects, switching to Compose v2 requires no changes to your YAML file. Simply use `docker compose` instead of `docker-compose`.
+
+Goto: [App: Docker-Compose File - Creating 2 Different Containers: WordPress Container depends on MySql Container](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB03-DockerCompose.md)
+
+### Docker BuildKit (NEW 2024) <a name="buildkit"></a>
+
+> **BuildKit is enabled by default since Docker 23.0** - It's the modern build engine for Docker!
+
+BuildKit is Docker's next-generation build system that provides improved performance, better caching, and new features for building container images.
+
+#### Key Features:
+- **Parallel build stages:** Build independent stages concurrently
+- **Improved caching:** More efficient layer caching and cache reuse
+- **Build secrets:** Securely pass secrets without including them in the image
+- **SSH forwarding:** Access private repositories during build
+- **Advanced Dockerfile syntax:** New instructions and capabilities
+
+#### Enable BuildKit (if using older Docker version):
+
+```bash
+# Enable for single build
+DOCKER_BUILDKIT=1 docker build .
+
+# Enable permanently (Linux/Mac)
+export DOCKER_BUILDKIT=1
+
+# Enable permanently (Windows PowerShell)
+$env:DOCKER_BUILDKIT=1
+```
+
+#### BuildKit Advanced Features:
+
+```dockerfile
+# syntax=docker/dockerfile:1.4
+
+FROM ubuntu:22.04
+
+# Using build secrets (won't be stored in image)
+RUN --mount=type=secret,id=mysecret \
+    cat /run/secrets/mysecret
+
+# Using SSH forwarding for private repos
+RUN --mount=type=ssh \
+    git clone git@github.com:private/repo.git
+
+# Cache mount for package managers
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && apt-get install -y python3
+```
+
+#### Build with secrets:
+
+```bash
+docker build --secret id=mysecret,src=./secret.txt .
+```
+
+### Multi-Platform Builds (NEW 2024) <a name="multiplatform"></a>
+
+Multi-platform builds allow you to create Docker images that work on different architectures (AMD64, ARM64, etc.) with a single build command.
+
+#### Why Multi-Platform Builds?
+- Support ARM-based systems (Apple Silicon M1/M2/M3, Raspberry Pi, AWS Graviton)
+- Support AMD64 (Intel/AMD) systems
+- Create truly portable container images
+- One image works everywhere
+
+#### Setup buildx (included in Docker Desktop):
+
+```bash
+# Create a new builder instance
+docker buildx create --name mybuilder --use
+
+# Bootstrap the builder
+docker buildx inspect --bootstrap
+
+# List available builders
+docker buildx ls
+```
+
+#### Build for Multiple Platforms:
+
+```bash
+# Build for AMD64 and ARM64
+docker buildx build --platform linux/amd64,linux/arm64 -t myapp:latest .
+
+# Build and push to registry
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t username/myapp:latest --push .
+
+# Build for specific platform only
+docker buildx build --platform linux/arm64 -t myapp:arm64 .
+```
+
+#### Multi-Platform Dockerfile Example:
+
+```dockerfile
+# syntax=docker/dockerfile:1.4
+FROM --platform=$BUILDPLATFORM golang:1.21 AS builder
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+WORKDIR /app
+COPY . .
+
+# Cross-compile for target platform
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -o myapp .
+
+FROM alpine:latest
+COPY --from=builder /app/myapp /usr/local/bin/
+CMD ["myapp"]
+```
+
+#### Available Platform Variables:
+- `$BUILDPLATFORM` - Platform where build is running
+- `$TARGETPLATFORM` - Platform for which you are building
+- `$TARGETOS` - OS component of TARGETPLATFORM
+- `$TARGETARCH` - Architecture component of TARGETPLATFORM
+
+Goto: [LAB-10: Multi-Platform Builds with Docker BuildKit](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB10-MultiPlatformBuilds.md)
+
+### Docker Security Best Practices (NEW 2024) <a name="security"></a>
+
+> **CRITICAL:** According to 2024 Docker Security Report, vulnerabilities in container images increased by 25% year-over-year. Security is not optional!
+
+#### <a name="distroless"></a> 1. Use Distroless Images
+
+Distroless images contain only your application and runtime dependencies - no shell, no package managers, no unnecessary tools.
+
+**Benefits:**
+- **Smaller attack surface:** 90%+ reduction in potential vulnerabilities
+- **Smaller image size:** Often 10-50MB instead of 100-500MB
+- **Better security:** No shell means attackers can't execute commands even if they breach the container
+
+**Popular Distroless Base Images:**
+
+```dockerfile
+# Static binary (1.9 MB)
+FROM gcr.io/distroless/static-debian12
+
+# For apps needing glibc (29.7 MB)
+FROM gcr.io/distroless/base-debian12
+
+# For C/C++ apps (32.3 MB)
+FROM gcr.io/distroless/cc-debian12
+
+# For Python apps
+FROM gcr.io/distroless/python3-debian12
+
+# For Java apps
+FROM gcr.io/distroless/java17-debian12
+
+# For Node.js apps
+FROM gcr.io/distroless/nodejs20-debian12
+```
+
+**Example with Multi-Stage Build:**
+
+```dockerfile
+# Build stage
+FROM node:20 AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+
+# Production stage - Distroless
+FROM gcr.io/distroless/nodejs20-debian12
+COPY --from=builder /app /app
+WORKDIR /app
+CMD ["index.js"]
+```
+
+#### <a name="nonroot"></a> 2. Run as Non-Root User
+
+> **WARNING:** 58% of container images run as root (UID 0). This is a major security risk!
+
+**Why it matters:**
+- If attacker breaks out of container, they have root on host
+- Principle of least privilege
+- Industry best practice and compliance requirement
+
+**Implementation:**
+
+```dockerfile
+FROM ubuntu:22.04
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Install dependencies as root
+RUN apt-get update && apt-get install -y python3
+
+# Change ownership
+COPY --chown=appuser:appuser . /app
+
+# Switch to non-root user
+USER appuser
+
+WORKDIR /app
+CMD ["python3", "app.py"]
+```
+
+**For Distroless (use numeric UID):**
+
+```dockerfile
+FROM gcr.io/distroless/python3-debian12
+COPY --chown=65532:65532 /app /app
+USER 65532
+CMD ["app.py"]
+```
+
+#### <a name="scanning"></a> 3. Vulnerability Scanning
+
+Scan your images regularly for known vulnerabilities (CVEs).
+
+**Tools:**
+
+```bash
+# Docker Scout (built into Docker Desktop)
+docker scout quickview myapp:latest
+docker scout cves myapp:latest
+docker scout recommendations myapp:latest
+
+# Trivy (open source, very popular)
+trivy image myapp:latest
+
+# Grype (from Anchore)
+grype myapp:latest
+
+# Snyk
+snyk container test myapp:latest
+```
+
+**Enable Docker Scout in CI/CD:**
+
+```yaml
+# GitHub Actions example
+- name: Docker Scout Scan
+  uses: docker/scout-action@v1
+  with:
+    command: cves
+    image: myapp:latest
+```
+
+#### 4. Additional Security Best Practices:
+
+```dockerfile
+# syntax=docker/dockerfile:1.4
+FROM ubuntu:22.04
+
+# Update packages to latest security patches
+RUN apt-get update && apt-get upgrade -y
+
+# Don't include secrets in image
+# BAD:  COPY .env /app/
+# GOOD: Use docker build --secret or environment variables at runtime
+
+# Use specific versions, not 'latest'
+FROM node:20.11.0-alpine3.19  # Good
+# FROM node:latest             # Bad
+
+# Minimize installed packages
+RUN apt-get install -y --no-install-recommends \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set read-only root filesystem
+# docker run --read-only myapp
+
+# Drop capabilities
+# docker run --cap-drop=ALL --cap-add=NET_BIND_SERVICE myapp
+```
+
+Goto: [LAB-11: Docker Security Best Practices](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB11-SecurityBestPractices.md)
+
+### Healthchecks (NEW 2024) <a name="healthchecks"></a>
+
+> **Important:** Without healthchecks, Docker cannot detect if your containerized service is unhealthy, preventing automatic restarts or recovery.
+
+Healthchecks tell Docker how to test if your container is working correctly. A container might be "running" but the application inside might be unresponsive.
+
+#### Dockerfile Healthcheck:
+
+```dockerfile
+FROM nginx:alpine
+
+# HTTP healthcheck
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost/ || exit 1
+
+# Alternative with curl
+HEALTHCHECK --interval=30s --timeout=3s \
+  CMD curl -f http://localhost/ || exit 1
+
+# For database
+HEALTHCHECK --interval=10s --timeout=3s \
+  CMD mysqladmin ping -h localhost || exit 1
+
+# For custom app
+HEALTHCHECK CMD /app/healthcheck.sh || exit 1
+```
+
+#### Parameters:
+- `--interval=30s` - Run check every 30 seconds
+- `--timeout=3s` - Command must complete within 3 seconds
+- `--start-period=5s` - Give container 5 seconds to start before checking
+- `--retries=3` - Need 3 consecutive failures to mark unhealthy
+
+#### Docker Compose Healthcheck:
+
+```yaml
+services:
+  web:
+    image: myapp
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:16
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+```
+
+#### Check Container Health:
+
+```bash
+# View health status
+docker ps
+
+# Inspect health details
+docker inspect --format='{{json .State.Health}}' container_name | jq
+
+# Depends on healthy service (Compose v2)
+services:
+  web:
+    depends_on:
+      db:
+        condition: service_healthy
+```
+
+### .dockerignore Best Practices (NEW 2024) <a name="dockerignore"></a>
+
+The `.dockerignore` file tells Docker which files to exclude from the build context, improving build speed and security.
+
+#### Why .dockerignore is Critical:
+- **Faster builds:** Don't copy unnecessary files
+- **Smaller context:** Less data sent to Docker daemon
+- **Security:** Don't accidentally include secrets
+- **Efficiency:** Better layer caching
+
+#### Comprehensive .dockerignore Example:
 
 ```
-docker-compose up -d
-docker-compose down
-```
-Goto: [App: Docker-Compose File - Creating 2 Different Containers:  WordPress Container depends on MySql Container](https://github.com/omerbsezer/Fast-Docker/blob/main/DockerCompose.md)
+# .dockerignore
 
-### Docker Swarm  <a name="swarm"></a>
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Docker
+docker-compose*.yml
+Dockerfile*
+.dockerignore
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+docs/
+*.md
+
+# Dependencies (will be installed in container)
+node_modules/
+venv/
+__pycache__/
+*.pyc
+vendor/
+
+# Build outputs
+dist/
+build/
+target/
+out/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.coverage
+*.test
+test/
+tests/
+spec/
+*.spec.ts
+
+# Secrets (CRITICAL!)
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+credentials.json
+
+# Logs
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Large files
+*.tar
+*.zip
+*.gz
+*.mp4
+*.avi
+
+# Keep specific files (! prefix)
+!.env.example
+```
+
+#### Testing .dockerignore:
+
+```bash
+# See what will be included in build context
+docker build --no-cache --progress=plain -t test . 2>&1 | grep "Transferring context"
+
+# Or use docker buildx
+docker buildx build --progress=plain .
+```
+
+Goto: [LAB-12: Healthchecks and .dockerignore Best Practices](https://github.com/omerbsezer/Fast-Docker/blob/main/LAB12-HealthchecksDockerignore.md)
+
+### Docker Swarm (Legacy) <a name="swarm"></a>
+
+> **NOTE:** Docker Swarm is now considered legacy. For production orchestration, consider **Kubernetes** instead. See [Container Orchestration](#orchestration) section.
 
 One of the Container Orchestration tool: 
 - Automating and scheduling the 
@@ -473,14 +998,148 @@ Goto: [App: Creating Docker Swarm Cluster With 5 PCs using PlayWithDocker : 3 x 
 
 Goto: [Docker Commands Cheatsheet](https://github.com/omerbsezer/Fast-Docker/blob/main/DockerCommandCheatSheet.md)
 
+## Container Orchestration: Kubernetes vs Swarm <a name="orchestration"></a>
+
+> **Industry Standard 2024:** Kubernetes is the de facto standard for container orchestration in production environments.
+
+### Why Kubernetes Over Swarm?
+
+**Docker Swarm Status:**
+- Docker Swarm is now considered **legacy technology**
+- Limited development and new features since 2020
+- Smaller community and ecosystem
+- Basic orchestration capabilities
+- Good for: Simple deployments, learning, small projects
+
+**Kubernetes Advantages:**
+- **Industry standard:** Used by 88% of organizations (CNCF Survey 2024)
+- **Massive ecosystem:** Helm charts, operators, monitoring tools, service meshes
+- **Cloud native:** Native support in AWS (EKS), Azure (AKS), Google Cloud (GKE)
+- **Advanced features:** Auto-scaling, rolling updates, self-healing, advanced networking
+- **Enterprise support:** RedHat OpenShift, Rancher, VMware Tanzu
+- **Better for:** Production workloads, microservices, multi-cloud, complex applications
+
+### When to Use What?
+
+**Use Docker Compose (Single Host):**
+- Development environments
+- Simple applications
+- Testing
+- Single server deployments
+
+**Use Kubernetes (Multi-Host Production):**
+- Production microservices
+- Applications requiring high availability
+- Multi-datacenter deployments
+- Complex networking requirements
+- Auto-scaling needs
+
+**Use Docker Swarm (Legacy/Learning):**
+- Learning container orchestration basics
+- Legacy systems already using Swarm
+- Very simple multi-host deployments
+- Quick prototypes
+
+### Kubernetes Quick Example:
+
+```yaml
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - name: myapp
+        image: myapp:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: myapp
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+```
+
+### Learning Path Recommendation:
+
+1. **Start:** Docker basics (images, containers, volumes, networks)
+2. **Next:** Docker Compose for multi-container apps
+3. **Then:** Kubernetes fundamentals (if targeting production)
+4. **Advanced:** Service meshes (Istio, Linkerd), GitOps (ArgoCD, Flux)
+
+### Kubernetes Resources:
+- Official Documentation: https://kubernetes.io/docs/
+- Interactive Tutorial: https://kubernetes.io/docs/tutorials/kubernetes-basics/
+- Minikube (Local Kubernetes): https://minikube.sigs.k8s.io/
+- K3s (Lightweight Kubernetes): https://k3s.io/
+- CNCF Landscape: https://landscape.cncf.io/
+
 ## Other Useful Resources Related Docker  <a name="resource"></a>
-- Original Docker Document: https://docs.docker.com/get-started/
-- Cheatsheet: https://github.com/wsargent/docker-cheat-sheet
-- Workshop: https://dockerlabs.collabnix.com/workshop/docker/
-- All-in-one Docker Image for Deep Learning: https://github.com/floydhub/dl-docker
+
+### Official Documentation
+- Official Docker Documentation: https://docs.docker.com/
+- Docker BuildKit Documentation: https://docs.docker.com/build/buildkit/
+- Docker Compose v2 Documentation: https://docs.docker.com/compose/
+- Multi-Platform Builds: https://docs.docker.com/build/building/multi-platform/
+- Docker Security: https://docs.docker.com/engine/security/
+
+### Security Resources (NEW 2024)
+- Docker Scout: https://docs.docker.com/scout/
+- Trivy Security Scanner: https://github.com/aquasecurity/trivy
+- Distroless Container Images: https://github.com/GoogleContainerTools/distroless
+- Docker Security Best Practices: https://cheatsheetseries.owasp.org/cheatsheets/Docker_Security_Cheat_Sheet.html
+- Snyk Container Security: https://snyk.io/product/container-vulnerability-management/
+
+### Learning Resources
+- Docker Tutorial for Beginners [FULL COURSE in 3 Hours]: https://www.youtube.com/watch?v=3c-iBn73dDE&t=6831s
+- Docker and Kubernetes Tutorial | Full Course: https://www.youtube.com/watch?v=bhBSlnQcq2k&t=3088s
+- Play with Docker (Interactive Labs): https://labs.play-with-docker.com/
+- Docker Workshop: https://dockerlabs.collabnix.com/workshop/docker/
+
+### Tools & Utilities
+- Docker Cheatsheet: https://github.com/wsargent/docker-cheat-sheet
 - Various Dockerfiles for Different Purposes: https://github.com/jessfraz/dockerfiles
-- Docker Tutorial for Beginners [FULL COURSE in 3 Hours]- Youtube: https://www.youtube.com/watch?v=3c-iBn73dDE&t=6831s
-- Docker and Kubernetes Tutorial | Full Course [2021] - Youtube: https://www.youtube.com/watch?v=bhBSlnQcq2k&t=3088s
+- Dockerfile Best Practices: https://github.com/dnaprawa/dockerfile-best-practices
+- All-in-one Docker Image for Deep Learning: https://github.com/floydhub/dl-docker
+- Dive (Explore Docker Image Layers): https://github.com/wagoodman/dive
+- Hadolint (Dockerfile Linter): https://github.com/hadolint/hadolint
+
+### Blogs & Articles (2024)
+- Docker Blog: https://www.docker.com/blog/
+- Docker 2024 Highlights: https://www.docker.com/blog/docker-2024-highlights/
+- 8 Top Docker Tips & Tricks for 2024: https://www.docker.com/blog/8-top-docker-tips-tricks-for-2024/
+- Docker Security in 2025: https://cloudnativenow.com/topics/cloudnativedevelopment/docker/
 
 ## References  <a name="references"></a>
 - [Docker.com](https://www.docker.com/)
